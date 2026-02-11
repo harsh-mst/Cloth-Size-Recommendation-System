@@ -4,7 +4,7 @@ from sklearn.ensemble import RandomForestClassifier
 import pickle
 
 
-df = pd.read_csv('improved_size.csv')
+df = pd.read_csv('improved_size_balanced_empty.csv')
 X = df[['weight', 'height']]
 y = df['size']
 
@@ -14,7 +14,7 @@ model = RandomForestClassifier(n_estimators=100, random_state=42, max_depth=20)
 model.fit(X_train, y_train)
 
 
-with open('size_recommender_model_v2.pkl', 'wb') as f:
+with open('size_recommender_model_v4.pkl', 'wb') as f:
     pickle.dump(model, f)
 
 print("Model retrained and saved with current scikit-learn version!")

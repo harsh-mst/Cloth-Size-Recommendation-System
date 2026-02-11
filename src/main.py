@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI(
     title="Clothing Size Recommender API v2",
     description="Advanced API to predict clothing size (S, M, L, XL, XXL) based on user measurements",
-    version="2.0.0"
+    version="1.0.0"
 )
 
 app.add_middleware(
@@ -20,13 +20,16 @@ app.add_middleware(
 )
 
 
-with open("size_recommender_model_v2.pkl", "rb") as f:
+with open("size_recommender_model_synth.pkl", "rb") as f:
+# with open("size_recommender_model_v2.pkl", "rb") as f:
     model = pickle.load(f)
 
-with open("chest_encoder.pkl", "rb") as f:
+with open("chest_encoder_synth.pkl", "rb") as f:
+# with open("chest_encoder.pkl", "rb") as f:
     chest_encoder = pickle.load(f)
 
-with open("waist_encoder.pkl", "rb") as f:
+with open("waist_encoder_synth.pkl", "rb") as f:
+# with open("waist_encoder.pkl", "rb") as f:
     waist_encoder = pickle.load(f)
 
 
