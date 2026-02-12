@@ -90,7 +90,7 @@ def health_check():
 
 def encode_size(size: Optional[str], encoder) -> int:
     if size is None:
-        return encoder.transform(['Unknown'])[0]
+        return encoder.transform(['M'])[0]
     return encoder.transform([size])[0]
 
 
