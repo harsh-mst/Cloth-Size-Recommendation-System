@@ -13,23 +13,25 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://incomparable-trifle-73ffce.netlify.app",
+        "http://incomparable-trifle-73ffce.netlify.app",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
 with open("size_recommender_model_synth.pkl", "rb") as f:
-# with open("size_recommender_model_v2.pkl", "rb") as f:
+    # with open("size_recommender_model_v2.pkl", "rb") as f:
     model = pickle.load(f)
 
 with open("chest_encoder_synth.pkl", "rb") as f:
-# with open("chest_encoder.pkl", "rb") as f:
+    # with open("chest_encoder.pkl", "rb") as f:
     chest_encoder = pickle.load(f)
 
 with open("waist_encoder_synth.pkl", "rb") as f:
-# with open("waist_encoder.pkl", "rb") as f:
+    # with open("waist_encoder.pkl", "rb") as f:
     waist_encoder = pickle.load(f)
 
 
