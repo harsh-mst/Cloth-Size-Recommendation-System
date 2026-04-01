@@ -170,35 +170,73 @@ CHEST_CM = {"S": 86, "M": 96, "L": 106, None: 96}
 WAIST_CM = {"S": 70, "M": 80, "L": 90,  None: 80}
 
 
+# def _measurements_to_betas(height_cm, weight_kg, gender,
+#                             chest_label=None, waist_label=None):
+#     """Convert user measurements to STAR shape betas."""
+#     chest_cm = CHEST_CM.get(chest_label, 96)
+#     waist_cm = WAIST_CM.get(waist_label, 80)
+
+#     # Normalize each measurement relative to average body
+#     h_norm     = (height_cm - 170) / 10.0   # 0 = 170cm avg height
+#     w_norm     = (weight_kg  - 70)  / 15.0   # 0 = 70kg avg weight
+#     chest_norm = (chest_cm   - 96)  / 10.0   # 0 = M chest, +1 = L, -1 = S
+#     waist_norm = (waist_cm   - 80)  / 10.0   # 0 = M waist, +1 = L, -1 = S
+
+#     # Torso taper: big chest + small waist = athletic; equal = rectangular
+#     taper = chest_norm - waist_norm
+
+#     betas = torch.zeros(1, 10)
+#     betas[0, 0] = h_norm                     # overall height / body scale
+#     betas[0, 1] = w_norm * 0.7               # general body volume from weight
+#     betas[0, 2] = chest_norm * 1.2           # chest / upper torso width
+#     betas[0, 3] = waist_norm * 1.0           # waist / mid-torso width
+#     betas[0, 4] = taper * 0.8                # torso taper shape
+#     betas[0, 5] = w_norm * 0.4               # fat distribution (thighs, arms)
+
+#     if gender.lower() == "female":
+#         betas[0, 3] *= 0.85                  # women tend toward smaller waist
+#         betas[0, 6]  = 0.5 + waist_norm * 0.3  # hip width (female shape)
+#         betas[0, 7]  = chest_norm * 0.4      # bust shaping
+
+#     return betas
+
 def _measurements_to_betas(height_cm, weight_kg, gender,
                             chest_label=None, waist_label=None):
-    """Convert user measurements to STAR shape betas."""
-    chest_cm = CHEST_CM.get(chest_label, 96)
-    waist_cm = WAIST_CM.get(waist_label, 80)
+    
+    h_m   = height_cm / 100.0
+    bmi   = weight_kg / (h_m ** 2)
 
-    # Normalize each measurement relative to average body
-    h_norm     = (height_cm - 170) / 10.0   # 0 = 170cm avg height
-    w_norm     = (weight_kg  - 70)  / 15.0   # 0 = 70kg avg weight
-    chest_norm = (chest_cm   - 96)  / 10.0   # 0 = M chest, +1 = L, -1 = S
-    waist_norm = (waist_cm   - 80)  / 10.0   # 0 = M waist, +1 = L, -1 = S
+    # Normalize BMI: 22 = average fit, 17 = very thin, 30 = overweight
+    # This gives: -1.67 at BMI 17, 0 at BMI 22, +1.33 at BMI 32
+    bmi_norm   = (bmi - 22) / 6.0
 
-    # Torso taper: big chest + small waist = athletic; equal = rectangular
-    taper = chest_norm - waist_norm
+    # Height norm: taller = bigger frame
+    h_norm     = (height_cm - 170) / 10.0
+
+    # Chest/waist from labels
+    CHEST_CM   = {"S": 86, "M": 96, "L": 106, None: 96}
+    WAIST_CM   = {"S": 70, "M": 80, "L": 90,  None: 80}
+    chest_cm   = CHEST_CM.get(chest_label, 96)
+    waist_cm   = WAIST_CM.get(waist_label, 80)
+    chest_norm = (chest_cm - 96) / 10.0
+    waist_norm = (waist_cm - 80) / 10.0
+    taper      = chest_norm - waist_norm
 
     betas = torch.zeros(1, 10)
-    betas[0, 0] = h_norm                     # overall height / body scale
-    betas[0, 1] = w_norm * 0.7               # general body volume from weight
-    betas[0, 2] = chest_norm * 1.2           # chest / upper torso width
-    betas[0, 3] = waist_norm * 1.0           # waist / mid-torso width
-    betas[0, 4] = taper * 0.8                # torso taper shape
-    betas[0, 5] = w_norm * 0.4               # fat distribution (thighs, arms)
+    betas[0, 0] = h_norm                    # height / overall frame
+    betas[0, 1] = bmi_norm * 1.5            # body volume driven by BMI
+    betas[0, 2] = chest_norm * 1.2          # chest width
+    betas[0, 3] = waist_norm + bmi_norm * 0.5  # waist (label + BMI)
+    betas[0, 4] = taper * 0.8              # torso taper
+    betas[0, 5] = max(0, bmi_norm) * 0.8   # fat distribution (only adds, never subtracts)
 
     if gender.lower() == "female":
-        betas[0, 3] *= 0.85                  # women tend toward smaller waist
-        betas[0, 6]  = 0.5 + waist_norm * 0.3  # hip width (female shape)
-        betas[0, 7]  = chest_norm * 0.4      # bust shaping
+        betas[0, 3] *= 0.85
+        betas[0, 6]  = 0.5 + waist_norm * 0.3
+        betas[0, 7]  = chest_norm * 0.4
 
     return betas
+
 
 
 def _generate_star_mesh(height_cm: float, weight_kg: float,

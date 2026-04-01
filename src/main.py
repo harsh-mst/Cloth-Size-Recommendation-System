@@ -1,7 +1,7 @@
-from .mesh_generator import generate_mesh_glb
+from .mesh_generator1 import generate_mesh_glb
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import Response
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from typing import Literal, Optional
 import pickle
 import numpy as np
@@ -50,6 +50,16 @@ class UserMeasurements(BaseModel):
     waist_size: Optional[Literal["S", "M", "L"]] = Field(
         None, description="Waist size (optional)"
     )
+    @model_validator(mode='after')
+    def check_bmi(self):
+        h_m = self.height / 100
+        bmi = self.weight / (h_m ** 2)
+        if bmi > 60:
+            raise ValueError(
+                f"BMI {bmi:.1f} is too extreme for realistic mesh generation. "
+                f"Please check your height and weight values."
+            )
+        return self
 
     class Config:
         json_schema_extra = {
